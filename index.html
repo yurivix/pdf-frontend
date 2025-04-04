@@ -1,4 +1,4 @@
-""from flask import Flask, request, send_file, render_template_string
+from flask import Flask, request, send_file, render_template_string
 from werkzeug.utils import secure_filename
 from fpdf import FPDF
 from PyPDF2 import PdfMerger
@@ -11,23 +11,6 @@ UPLOAD_FOLDER = "uploads"
 TEMP_PDF_FOLDER = "temp_pdfs"
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 os.makedirs(TEMP_PDF_FOLDER, exist_ok=True)
-
-DOCUMENTS = [
-    ("requerimento_oab", "1. Requerimento de inscrição da OAB-ES"),
-    ("requerimento_conselho", "2. Requerimento de inscrição no Conselho Federal da OAB"),
-    ("historico", "3. Histórico Escolar da Faculdade"),
-    ("certidao_federal", "4. Certidão Negativa Justiça Federal"),
-    ("certificado_exame", "5. Certificado de Aprovação em Exame de Ordem"),
-    ("certidao_crime", "6. Certidão do Crime, Cível e Família"),
-    ("declaracao_atividade", "7. Declaração de atividade, função ou cargo"),
-    ("declaracao_pj", "8. Declaração fornecida pela pessoa jurídica"),
-    ("certidao_eleitoral", "9. Certidão de quitação eleitoral"),
-    ("documentos_pessoais", "10. RG, CPF, Título de Eleitor, Reservista"),
-    ("comprovante_residencia", "11. Comprovante de residência atualizado"),
-    ("taxa_inscricao", "12. Serviço de Emissão de Taxas"),
-    ("declaracao_responsabilidade", "13. Declaração de responsabilidade"),
-    ("peticionamento", "14. Peticionamento eletrônico (após juntar documentos)")
-]
 
 IMAGE_PATH = "image.jpg"
 
@@ -51,7 +34,7 @@ HTML_FORM = """
             text-align: center;
             color: #333;
         }
-        input, button, label {
+        input[type=file], input[type=text], button, label {
             display: block;
             width: 100%;
             margin-top: 10px;
@@ -82,12 +65,62 @@ HTML_FORM = """
 <body>
     <h1>Juntar Documentos OAB-ES</h1>
     <form action=\"/upload\" method=\"post\" enctype=\"multipart/form-data\">
-        {% for field, label in documents %}
         <div class=\"file-block\">
-            <input type=\"file\" name=\"{{ field }}\" required>
-            <div class=\"file-label\">{{ label }}</div>
+            <label for=\"requerimento_oab\">1. Requerimento de inscrição da OAB-ES</label>
+            <input type=\"file\" id=\"requerimento_oab\" name=\"requerimento_oab\" required>
         </div>
-        {% endfor %}
+        <div class=\"file-block\">
+            <label for=\"requerimento_conselho\">2. Requerimento de inscrição no Conselho Federal da OAB</label>
+            <input type=\"file\" id=\"requerimento_conselho\" name=\"requerimento_conselho\" required>
+        </div>
+        <div class=\"file-block\">
+            <label for=\"historico\">3. Histórico Escolar da Faculdade</label>
+            <input type=\"file\" id=\"historico\" name=\"historico\" required>
+        </div>
+        <div class=\"file-block\">
+            <label for=\"certidao_federal\">4. Certidão Negativa Justiça Federal</label>
+            <input type=\"file\" id=\"certidao_federal\" name=\"certidao_federal\" required>
+        </div>
+        <div class=\"file-block\">
+            <label for=\"certificado_exame\">5. Certificado de Aprovação em Exame de Ordem</label>
+            <input type=\"file\" id=\"certificado_exame\" name=\"certificado_exame\" required>
+        </div>
+        <div class=\"file-block\">
+            <label for=\"certidao_crime\">6. Certidão do Crime, Cível e Família</label>
+            <input type=\"file\" id=\"certidao_crime\" name=\"certidao_crime\" required>
+        </div>
+        <div class=\"file-block\">
+            <label for=\"declaracao_atividade\">7. Declaração de atividade, função ou cargo</label>
+            <input type=\"file\" id=\"declaracao_atividade\" name=\"declaracao_atividade\" required>
+        </div>
+        <div class=\"file-block\">
+            <label for=\"declaracao_pj\">8. Declaração fornecida pela pessoa jurídica</label>
+            <input type=\"file\" id=\"declaracao_pj\" name=\"declaracao_pj\" required>
+        </div>
+        <div class=\"file-block\">
+            <label for=\"certidao_eleitoral\">9. Certidão de quitação eleitoral</label>
+            <input type=\"file\" id=\"certidao_eleitoral\" name=\"certidao_eleitoral\" required>
+        </div>
+        <div class=\"file-block\">
+            <label for=\"documentos_pessoais\">10. RG, CPF, Título de Eleitor, Reservista</label>
+            <input type=\"file\" id=\"documentos_pessoais\" name=\"documentos_pessoais\" required>
+        </div>
+        <div class=\"file-block\">
+            <label for=\"comprovante_residencia\">11. Comprovante de residência atualizado</label>
+            <input type=\"file\" id=\"comprovante_residencia\" name=\"comprovante_residencia\" required>
+        </div>
+        <div class=\"file-block\">
+            <label for=\"taxa_inscricao\">12. Serviço de Emissão de Taxas</label>
+            <input type=\"file\" id=\"taxa_inscricao\" name=\"taxa_inscricao\" required>
+        </div>
+        <div class=\"file-block\">
+            <label for=\"declaracao_responsabilidade\">13. Declaração de responsabilidade</label>
+            <input type=\"file\" id=\"declaracao_responsabilidade\" name=\"declaracao_responsabilidade\" required>
+        </div>
+        <div class=\"file-block\">
+            <label for=\"peticionamento\">14. Peticionamento eletrônico</label>
+            <input type=\"file\" id=\"peticionamento\" name=\"peticionamento\" required>
+        </div>
         <label for=\"filename\">Nome do PDF final:</label>
         <input type=\"text\" name=\"filename\" placeholder=\"documento_final.pdf\">
         <button type=\"submit\">Gerar PDF</button>
@@ -98,64 +131,7 @@ HTML_FORM = """
 
 @app.route("/", methods=["GET"])
 def index():
-    return render_template_string(HTML_FORM, documents=DOCUMENTS)
-
-@app.route("/upload", methods=["POST"])
-def upload_files():
-    output_name = request.form.get("filename") or "documento_final.pdf"
-    if not output_name.endswith(".pdf"):
-        output_name += ".pdf"
-
-    pdf_merger = PdfMerger()
-    temp_pdfs = []
-
-    for field, label in DOCUMENTS:
-        file = request.files.get(field)
-        if not file:
-            return f"Erro: o documento obrigatório '{label}' não foi enviado.", 400
-
-        filename = secure_filename(file.filename)
-        filepath = os.path.join(UPLOAD_FOLDER, filename)
-        file.save(filepath)
-
-        if filename.lower().endswith((".jpg", ".jpeg", ".png")):
-            image = Image.open(filepath)
-            image_rgb = image.convert("RGB")
-            temp_pdf_path = os.path.join(TEMP_PDF_FOLDER, filename + ".pdf")
-            image_rgb.save(temp_pdf_path)
-            temp_pdfs.append(temp_pdf_path)
-        elif filename.lower().endswith(".pdf"):
-            temp_pdfs.append(filepath)
-
-    # Adicionando a imagem ao PDF final
-    if os.path.exists(IMAGE_PATH):
-        img = Image.open(IMAGE_PATH)
-        img_pdf_path = os.path.join(TEMP_PDF_FOLDER, "intro.pdf")
-        img.convert("RGB").save(img_pdf_path)
-        temp_pdfs.insert(0, img_pdf_path)
-
-    for pdf_path in temp_pdfs:
-        pdf_merger.append(pdf_path)
-
-    final_pdf_path = os.path.join(TEMP_PDF_FOLDER, output_name)
-    pdf_merger.write(final_pdf_path)
-    pdf_merger.close()
-
-    response = send_file(final_pdf_path, as_attachment=True)
-
-    @app.after_request
-    def cleanup(response):
-        try:
-            shutil.rmtree(UPLOAD_FOLDER)
-            shutil.rmtree(TEMP_PDF_FOLDER)
-        except Exception as e:
-            app.logger.error(f"Erro ao limpar pastas: {e}")
-        finally:
-            os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-            os.makedirs(TEMP_PDF_FOLDER, exist_ok=True)
-        return response
-
-    return response
+    return render_template_string(HTML_FORM)
 
 if __name__ == "__main__":
     app.run(debug=True)
