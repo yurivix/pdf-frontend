@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gerador de PDF</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 2rem;
+      max-width: 600px;
+      margin: auto;
+    }
+    input[type="file"] {
+      margin-bottom: 1rem;
+    }
+    button {
+      padding: 0.5rem 1rem;
+      font-size: 1rem;
+    }
+  </style>
+</head>
+<body>
+  <h1>Enviar Documentos</h1>
+  <form id="uploadForm">
+    <input type="file" name="files" id="files" multiple required><br>
+    <button type="submit">Gerar PDF</button>
+  </form>
+
+  <script>
+    const form = document.getElementById('uploadForm');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const files = document.getElementById('files').files;
+      if (files.length === 0) return alert('Selecione ao menos um arquivo.');
+
+      const formData = new FormData();
+      for (let file of files) {
+        formData.append("files", file);
+      }
+
+      const response = await fetch("/upload", {
+        method: "POST",
+        body: formData
+      });
+
+      if (!response.ok) {
+        alert("Erro ao gerar o PDF.");
+        return;
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "documento_final.pdf";
+      a.click();
+      window.URL.revokeObjectURL(url);
+    });
+  </script>
+</body>
+</html>
