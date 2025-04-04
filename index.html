@@ -1,4 +1,4 @@
-from flask import Flask, request, send_file, render_template_string
+""from flask import Flask, request, send_file, render_template_string
 from werkzeug.utils import secure_filename
 from fpdf import FPDF
 from PyPDF2 import PdfMerger
@@ -69,14 +69,24 @@ HTML_FORM = """
         button:hover {
             background-color: #246b45;
         }
+        .file-block {
+            margin-bottom: 20px;
+        }
+        .file-label {
+            font-size: 14px;
+            color: #555;
+            margin-top: 4px;
+        }
     </style>
 </head>
 <body>
     <h1>Juntar Documentos OAB-ES</h1>
     <form action=\"/upload\" method=\"post\" enctype=\"multipart/form-data\">
         {% for field, label in documents %}
-        <label for=\"{{ field }}\">{{ label }}:</label>
-        <input type=\"file\" name=\"{{ field }}\" required>
+        <div class=\"file-block\">
+            <input type=\"file\" name=\"{{ field }}\" required>
+            <div class=\"file-label\">{{ label }}</div>
+        </div>
         {% endfor %}
         <label for=\"filename\">Nome do PDF final:</label>
         <input type=\"text\" name=\"filename\" placeholder=\"documento_final.pdf\">
